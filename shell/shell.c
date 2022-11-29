@@ -18,29 +18,12 @@
 // Clearing the shell using escape sequences
 #define clear() printf("\033[H\033[J")
 
-// Greeting shell during startup
-void init_shell()
-{
-	clear();
-	printf("\n\n\n\n******************"
-		"************************");
-	printf("\n\n\n\t**** Operating System Class ****");
-	printf("\n\n\t- Tolulope Akinlabi -");
-	printf("\n\n\n\n*******************"
-		"***********************");
-	char* username = getenv("USER");
-	printf("\n\n\nUSER is: @%s", username);
-	printf("\n");
-	sleep(3);
-	clear();
-}
-
 // Function to take input
 int takeInput(char* str)
 {
 	char* buf;
 
-	buf = readline("\n>>> ");
+	buf = readline("> ");
 	if (strlen(buf) != 0) {
 		add_history(buf);
 		strcpy(str, buf);
@@ -57,7 +40,7 @@ void printDir()
 {
 	char cwd[1024];
 	getcwd(cwd, sizeof(cwd));
-	printf("\nDir: %s", cwd);
+	printf("\n%s", cwd);
 }
 
 
@@ -143,6 +126,26 @@ void execArgsPiped(char** parsed, char** parsedpipe)
 	}
 }
 
+//setting the setenv
+void settingEnv (char *args) {
+    if (args == NULL) {
+        fprintf(stderr, "setenv: missing argument \n");
+    }
+    else {
+        char *list [2]; 
+        char delim[] = "=";
+        int i = 0;
+        
+        list[0] = strtok(args, delim);
+        list[1] = strtok(NULL, delim);
+
+        if (setenv (list[0], list[1], 1) != 0) {
+            perror ("setenv");
+        }
+
+
+    }
+}
 
 // Help commands
 void openHelp()
@@ -154,6 +157,10 @@ void openHelp()
 		"\n>cd"
 		"\n>ls"
 		"\n>exit"
+        "\n>pwd"
+        "\n>echo"
+        "\n>env"
+        "\n>setenv"
 		"\n>all other general commands available in UNIX shell"
 		"\n>pipe handling"
 		"\n>improper space handling");
@@ -165,14 +172,15 @@ void openHelp()
 // Function to execute builtin commands
 int ownCmdHandler(char** parsed)
 {
-	int NoOfOwnCmds = 4, i, switchOwnArg = 0;
+	int NoOfOwnCmds = 5, i, switchOwnArg = 0;
 	char* ListOfOwnCmds[NoOfOwnCmds];
 	char* username;
 
 	ListOfOwnCmds[0] = "exit";
 	ListOfOwnCmds[1] = "cd";
 	ListOfOwnCmds[2] = "help";
-	ListOfOwnCmds[3] = "hello";
+	ListOfOwnCmds[3] = "env";
+    ListOfOwnCmds[4] = "setenv";
 
 	for (i = 0; i < NoOfOwnCmds; i++) {
 		if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
@@ -192,11 +200,11 @@ int ownCmdHandler(char** parsed)
 		openHelp();
 		return 1;
 	case 4:
-		username = getenv("USER");
-		printf("\nHello %s.\nThis is a demo shell. "
-			"\nUse help to know more..\n",
-			username);
+		username = getenv(parsed[1]);
 		return 1;
+    case 5:
+        settingEnv(parsed[1]);
+        return 1;
 	default:
 		break;
 	}
@@ -264,7 +272,6 @@ int main()
 	char inputString[MAXCOM], *parsedArgs[MAXLIST];
 	char* parsedArgsPiped[MAXLIST];
 	int execFlag = 0;
-	init_shell();
 
 	while (1) {
 		// print shell line
