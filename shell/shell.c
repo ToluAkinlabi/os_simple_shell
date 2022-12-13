@@ -15,6 +15,8 @@
 #define MAXCOM 1000 // max number of letters to be supported
 #define MAXLIST 100 // max number of commands to be supported
 
+extern char **environ;
+
 // Clearing the shell using escape sequences
 #define clear() printf("\033[H\033[J")
 
@@ -126,6 +128,19 @@ void execArgsPiped(char** parsed, char** parsedpipe)
 	}
 }
 
+//get env
+void getEnv(char *arg1, char *arg2) {
+  if (arg2 != NULL) {
+    printf("%s\n", getenv(arg2));
+  }   
+  else {
+    int i = 0;
+    while(environ[i]) {
+      printf("%s\n", environ[i++]); // prints in form of "variable=value"
+    }
+  }
+}
+
 //setting the setenv
 void settingEnv (char *args) {
     if (args == NULL) {
@@ -146,6 +161,29 @@ void settingEnv (char *args) {
 
     }
 }
+
+void echoFunc(char **args) {
+  if (args[1] == NULL) {
+    fprintf(stderr, "echo: missing argument\n");
+  }
+  else {    
+    int x = 1;
+
+    while (args[x] != NULL) {
+      if (args[x][0] == '$') {
+        printf("%s ", getenv(args[x]+1));
+      }
+      else {
+        printf("%s ", args[x]);
+      }
+      x++;
+    }
+    // printf("Here is a problem!");
+    printf("\n");
+
+  }
+}
+
 
 // Help commands
 void openHelp()
@@ -168,11 +206,12 @@ void openHelp()
 	return;
 }
 
+
 // 2. Implement Built-In Commands
 // Function to execute builtin commands
 int ownCmdHandler(char** parsed)
 {
-	int NoOfOwnCmds = 5, i, switchOwnArg = 0;
+	int NoOfOwnCmds = 6, i, switchOwnArg = 0;
 	char* ListOfOwnCmds[NoOfOwnCmds];
 	char* username;
 
@@ -181,6 +220,8 @@ int ownCmdHandler(char** parsed)
 	ListOfOwnCmds[2] = "help";
 	ListOfOwnCmds[3] = "env";
     ListOfOwnCmds[4] = "setenv";
+    ListOfOwnCmds[5] = "echo";
+    ListOfOwnCmds[6] = "pwd";
 
 	for (i = 0; i < NoOfOwnCmds; i++) {
 		if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
@@ -200,11 +241,13 @@ int ownCmdHandler(char** parsed)
 		openHelp();
 		return 1;
 	case 4:
-		username = getenv(parsed[1]);
+		getEnv(parsed[0],parsed[1]);
 		return 1;
     case 5:
         settingEnv(parsed[1]);
         return 1;
+    case 6:
+        echoFunc(parsed);
 	default:
 		break;
 	}
@@ -285,11 +328,11 @@ int main()
 
 
 		// execute
-		if (execFlag == 1)
-			execArgs(parsedArgs);
+		 if (execFlag == 1)
+		 	execArgs(parsedArgs);
 
-		if (execFlag == 2)
-			execArgsPiped(parsedArgs, parsedArgsPiped);
+		 if (execFlag == 2)
+		 	execArgsPiped(parsedArgs, parsedArgsPiped);
 	}
 	return 0;
 }
